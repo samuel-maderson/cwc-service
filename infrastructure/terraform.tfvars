@@ -1,0 +1,21 @@
+aws_region     = "us-east-1"
+cluster_name   = "cwc-cluster"
+task_family    = "cwc-task"
+container_name  = "cwc-app"
+container_image = "samuelmadersondev/cwc-service:latest"
+service_name    = "cwc-service"
+container_port = 80
+cpu            = "256"
+memory         = "512"
+desired_count  = 2
+vpc_name          = "cwc-vpc"
+vpc_cidr          = "10.0.0.0/16"
+alb_name          = "cwc-alb"
+target_group_name    = "cwc-tg"
+ecr_repository_name     = "cwc-service"
+rds_cluster_identifier  = "cwc-db-cluster"
+database_name           = "cwc_catalog"
+// Test env - These credentials will be move to AWS SecretsManager later
+master_username         = "admin"
+master_password         = "changeme123!"
+db_subnet_group_name    = "cwc-db-subnet-group"
