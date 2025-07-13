@@ -22,3 +22,18 @@ output "rds_dev_endpoint" {
   description = "RDS dev instance endpoint"
   value       = var.environment == "dev" ? module.rds_dev[0].db_endpoint : null
 }
+
+output "rds_dev_secret_name" {
+  description = "Name of the RDS dev master user secret"
+  value       = var.environment == "dev" ? module.rds_dev[0].master_user_secret_name : null
+}
+
+output "s3_bucket_name" {
+  description = "Name of the S3 bucket for vehicle images"
+  value       = module.s3.bucket_name
+}
+
+output "app_role_arn" {
+  description = "ARN of the application IAM role"
+  value       = module.iam.app_role_arn
+}

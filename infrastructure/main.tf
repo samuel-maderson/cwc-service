@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1"
+    }
   }
 }
 
@@ -17,6 +21,24 @@ module "vpc" {
 
   vpc_name = var.vpc_name
   vpc_cidr = var.vpc_cidr
+}
+
+module "s3" {
+  source = "./modules/s3"
+
+  bucket_name = "cwc-vehicle-images-${random_id.bucket_suffix.hex}"
+}
+
+resource "random_id" "bucket_suffix" {
+  byte_length = 4
+}
+
+module "iam" {
+  source = "./modules/iam"
+
+  cluster_name   = var.cluster_name
+  s3_bucket_arn  = module.s3.bucket_arn
+  secret_arn     = var.environment == "dev" ? module.rds_dev[0].master_user_secret_arn : module.rds[0].master_user_secret_arn
 }
 
 module "alb" {
@@ -94,9 +116,3 @@ module "servicemanager" {
   rds_master_user_secret_arn = module.rds[0].master_user_secret_arn
 }
 
-module "servicemanager_dev" {
-  count  = var.environment == "dev" ? 1 : 0
-  source = "./modules/servicemanager_dev"
-
-  rds_master_user_secret_arn = module.rds_dev[0].master_user_secret_arn
-}

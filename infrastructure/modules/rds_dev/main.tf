@@ -30,6 +30,28 @@ resource "aws_security_group" "rds" {
   }
 }
 
+resource "random_id" "secret_suffix" {
+  byte_length = 4
+}
+
+resource "aws_secretsmanager_secret" "db_master" {
+  name = "cwc-db-dev-${random_id.secret_suffix.hex}"
+  description = "Master credentials for CWC dev database"
+}
+
+resource "aws_secretsmanager_secret_version" "db_master" {
+  secret_id = aws_secretsmanager_secret.db_master.id
+  secret_string = jsonencode({
+    username = var.master_username
+    password = random_password.master.result
+  })
+}
+
+resource "random_password" "master" {
+  length  = 16
+  special = false
+}
+
 resource "aws_db_instance" "main" {
   identifier                    = "${var.cluster_identifier}-dev"
   engine                        = "mysql"
@@ -39,7 +61,7 @@ resource "aws_db_instance" "main" {
   storage_type                  = "gp2"
   db_name                       = var.database_name
   username                      = var.master_username
-  manage_master_user_password   = true
+  password                      = random_password.master.result
   db_subnet_group_name          = aws_db_subnet_group.main.name
   vpc_security_group_ids        = [aws_security_group.rds.id]
   skip_final_snapshot           = true
