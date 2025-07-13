@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Numeric
 
 db = SQLAlchemy()
 
@@ -9,7 +10,7 @@ class Vehicle(db.Model):
     make = db.Column(db.String(50), nullable=False)
     model = db.Column(db.String(100), nullable=False)
     year = db.Column(db.Integer, nullable=False)
-    price = db.Column(db.Decimal(10, 2))
+    price = db.Column(Numeric(10, 2))
     image_url = db.Column(db.String(500))
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     
