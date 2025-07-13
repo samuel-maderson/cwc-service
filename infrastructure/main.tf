@@ -20,6 +20,7 @@ module "vpc" {
 }
 
 module "alb" {
+  count  = var.environment == "prod" ? 1 : 0
   source = "./modules/alb"
 
   alb_name          = var.alb_name
@@ -29,6 +30,7 @@ module "alb" {
 }
 
 module "ecs" {
+  count  = var.environment == "prod" ? 1 : 0
   source = "./modules/ecs"
 
   cluster_name        = var.cluster_name
@@ -43,17 +45,12 @@ module "ecs" {
   vpc_id              = module.vpc.vpc_id
   subnet_ids          = module.vpc.private_subnet_ids
   aws_region          = var.aws_region
-  target_group_arn    = module.alb.target_group_arn
+  target_group_arn    = module.alb[0].target_group_arn
   ecr_repository_name = var.ecr_repository_name
 }
 
-module "servicemanager" {
-  source = "./modules/servicemanager"
-
-  rds_master_user_secret_arn = module.rds.master_user_secret_arn
-}
-
 module "bastion" {
+  count  = var.environment == "prod" ? 1 : 0
   source = "./modules/bastion"
 
   cluster_name       = var.cluster_name
@@ -61,7 +58,21 @@ module "bastion" {
   private_subnet_ids = module.vpc.private_subnet_ids
 }
 
+module "rds_dev" {
+  count  = var.environment == "dev" ? 1 : 0
+  source = "./modules/rds_dev"
+
+  cluster_name         = var.cluster_name
+  cluster_identifier   = var.rds_cluster_identifier
+  database_name        = var.database_name
+  master_username      = var.master_username
+  vpc_id               = module.vpc.vpc_id
+  public_subnet_ids    = module.vpc.public_subnet_ids
+  db_subnet_group_name = var.db_subnet_group_name
+}
+
 module "rds" {
+  count  = var.environment == "prod" ? 1 : 0
   source = "./modules/rds"
 
   cluster_name            = var.cluster_name
@@ -71,7 +82,21 @@ module "rds" {
   master_password         = var.master_password
   vpc_id                  = module.vpc.vpc_id
   private_subnet_ids      = module.vpc.private_subnet_ids
-  ecs_security_group_id   = module.ecs.security_group_id
-  bastion_security_group_id = module.bastion.security_group_id
+  ecs_security_group_id   = module.ecs[0].security_group_id
+  bastion_security_group_id = module.bastion[0].security_group_id
   db_subnet_group_name    = var.db_subnet_group_name
+}
+
+module "servicemanager" {
+  count  = var.environment == "prod" ? 1 : 0
+  source = "./modules/servicemanager"
+
+  rds_master_user_secret_arn = module.rds[0].master_user_secret_arn
+}
+
+module "servicemanager_dev" {
+  count  = var.environment == "dev" ? 1 : 0
+  source = "./modules/servicemanager_dev"
+
+  rds_master_user_secret_arn = module.rds_dev[0].master_user_secret_arn
 }

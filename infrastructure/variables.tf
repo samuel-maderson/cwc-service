@@ -4,6 +4,12 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "environment" {
+  description = "Environment (dev or prod)"
+  type        = string
+  default     = "dev"
+}
+
 variable "cluster_name" {
   description = "Name of the ECS cluster"
   type        = string

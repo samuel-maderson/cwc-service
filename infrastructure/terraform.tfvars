@@ -1,4 +1,5 @@
 aws_region     = "us-east-1"
+environment    = "dev"
 cluster_name   = "cwc-cluster"
 task_family    = "cwc-task"
 container_name  = "cwc-app"
