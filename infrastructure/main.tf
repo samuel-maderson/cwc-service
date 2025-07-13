@@ -47,16 +47,31 @@ module "ecs" {
   ecr_repository_name = var.ecr_repository_name
 }
 
+module "servicemanager" {
+  source = "./modules/servicemanager"
+
+  rds_master_user_secret_arn = module.rds.master_user_secret_arn
+}
+
+module "bastion" {
+  source = "./modules/bastion"
+
+  cluster_name       = var.cluster_name
+  vpc_id             = module.vpc.vpc_id
+  private_subnet_ids = module.vpc.private_subnet_ids
+}
+
 module "rds" {
   source = "./modules/rds"
 
-  cluster_name           = var.cluster_name
-  cluster_identifier     = var.rds_cluster_identifier
-  database_name          = var.database_name
-  master_username        = var.master_username
-  master_password        = var.master_password
-  vpc_id                 = module.vpc.vpc_id
-  private_subnet_ids     = module.vpc.private_subnet_ids
-  ecs_security_group_id  = module.ecs.security_group_id
-  db_subnet_group_name   = var.db_subnet_group_name
+  cluster_name            = var.cluster_name
+  cluster_identifier      = var.rds_cluster_identifier
+  database_name           = var.database_name
+  master_username         = var.master_username
+  master_password         = var.master_password
+  vpc_id                  = module.vpc.vpc_id
+  private_subnet_ids      = module.vpc.private_subnet_ids
+  ecs_security_group_id   = module.ecs.security_group_id
+  bastion_security_group_id = module.bastion.security_group_id
+  db_subnet_group_name    = var.db_subnet_group_name
 }

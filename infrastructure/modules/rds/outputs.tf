@@ -17,3 +17,8 @@ output "security_group_id" {
   description = "RDS security group ID"
   value       = aws_security_group.rds.id
 }
+
+output "master_user_secret_arn" {
+  description = "ARN of the RDS master user secret"
+  value       = length(aws_db_instance.main.master_user_secret) > 0 ? aws_db_instance.main.master_user_secret[0].secret_arn : null
+}

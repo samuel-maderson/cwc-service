@@ -19,8 +19,9 @@ variable "master_username" {
 }
 
 variable "master_password" {
-  description = "Master password for the database"
+  description = "Master password for the database (optional when using managed passwords)"
   type        = string
+  default     = null
   sensitive   = true
 }
 
@@ -39,7 +40,13 @@ variable "ecs_security_group_id" {
   type        = string
 }
 
+variable "bastion_security_group_id" {
+  description = "Security group ID of bastion host"
+  type        = string
+}
+
 variable "db_subnet_group_name" {
   description = "Name of the DB subnet group"
   type        = string
 }
+
