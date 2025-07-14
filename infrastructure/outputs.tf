@@ -9,8 +9,8 @@ output "bastion_instance_name" {
 }
 
 output "rds_secret_name" {
-  description = "Name of the RDS master user secret"
-  value       = "rds-db-credentials/${var.rds_cluster_identifier}/master"
+  description = "Name of the RDS prod master user secret"
+  value       = var.environment == "prod" ? module.rds[0].master_user_secret_name : null
 }
 
 output "rds_endpoint" {
@@ -36,4 +36,9 @@ output "s3_bucket_name" {
 output "app_role_arn" {
   description = "ARN of the application IAM role"
   value       = module.iam.app_role_arn
+}
+
+output "ecr_repository_url" {
+  description = "URL of the ECR repository"
+  value       = module.ecr.repository_url
 }

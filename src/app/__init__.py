@@ -1,23 +1,9 @@
-import subprocess
-import json
+import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from config.settings import config
 from app.secrets import get_db_credentials
-
-def get_terraform_output(output_name):
-    """Get terraform output value"""
-    try:
-        result = subprocess.run(
-            ['terraform', 'output', '-raw', output_name],
-            cwd='../infrastructure',
-            capture_output=True,
-            text=True
-        )
-        return result.stdout.strip() if result.returncode == 0 else None
-    except:
-        return None
 
 def create_app(config_name=None):
     """Create and configure Flask application with database and routes"""
@@ -28,14 +14,16 @@ def create_app(config_name=None):
     app.config.from_object(app_config)
     
     try:
-        secret_name = get_terraform_output('rds_dev_secret_name')
-        if secret_name and secret_name != 'null':
-            app_config.SECRET_NAME = secret_name
+        print(f"DEBUG: Environment: {os.getenv('ENVIRONMENT')}")
+        print(f"DEBUG: RDS Endpoint: {os.getenv('RDS_ENDPOINT')}")
+        print(f"DEBUG: Secret Name: {app_config.SECRET_NAME}")
         
         db_creds = get_db_credentials(app_config)
         database_uri = f"mysql+pymysql://{db_creds['username']}:{db_creds['password']}@{db_creds['host']}:{db_creds['port']}/{db_creds['database']}"
+        print(f"DEBUG: Database URI: mysql+pymysql://{db_creds['username']}:***@{db_creds['host']}:{db_creds['port']}/{db_creds['database']}")
         app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
     except Exception as e:
+        print(f"ERROR: Failed to get database credentials: {e}")
         app.logger.error(f"Failed to get database credentials: {e}")
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fallback.db'
     
@@ -46,6 +34,8 @@ def create_app(config_name=None):
     migrate = Migrate(app, db)
     
     from app.routes import bp as main_bp
+    from app.health import health_bp
     app.register_blueprint(main_bp)
+    app.register_blueprint(health_bp)
     
     return app

@@ -18,12 +18,7 @@ variable "master_username" {
   type        = string
 }
 
-variable "master_password" {
-  description = "Master password for the database (optional when using managed passwords)"
-  type        = string
-  default     = null
-  sensitive   = true
-}
+
 
 variable "vpc_id" {
   description = "VPC ID where RDS will be created"

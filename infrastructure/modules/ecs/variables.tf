@@ -74,6 +74,16 @@ variable "ecr_repository_name" {
   type        = string
 }
 
+variable "s3_bucket_arn" {
+  description = "ARN of the S3 bucket"
+  type        = string
+}
+
+variable "secret_arn" {
+  description = "ARN of the Secrets Manager secret"
+  type        = string
+}
+
 variable "alb_security_group_id" {
   description = "Security group ID of the ALB"
   type        = string

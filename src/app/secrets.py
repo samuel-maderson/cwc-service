@@ -19,24 +19,13 @@ def get_secret(secret_name, region_name):
 
 def get_db_credentials(config):
     """Get database credentials from Secrets Manager"""
-    import subprocess
-    
-    try:
-        result = subprocess.run(
-            ['terraform', 'output', '-raw', 'rds_dev_endpoint'],
-            cwd='../infrastructure',
-            capture_output=True,
-            text=True
-        )
-        rds_host = result.stdout.strip().replace(':3306', '') if result.returncode == 0 else ''
-    except:
-        rds_host = ''
+    import os
     
     secret = get_secret(config.SECRET_NAME, config.AWS_REGION)
     return {
         'username': secret['username'],
         'password': secret['password'],
-        'host': rds_host or secret.get('host', ''),
+        'host': os.getenv('RDS_ENDPOINT', secret.get('host', '')),
         'port': secret.get('port', 3306),
         'database': config.DATABASE_NAME
     }

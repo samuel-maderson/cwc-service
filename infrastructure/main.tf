@@ -33,6 +33,12 @@ resource "random_id" "bucket_suffix" {
   byte_length = 4
 }
 
+module "ecr" {
+  source = "./modules/ecr"
+
+  repository_name = var.ecr_repository_name
+}
+
 module "iam" {
   source = "./modules/iam"
 
@@ -69,6 +75,8 @@ module "ecs" {
   aws_region          = var.aws_region
   target_group_arn    = module.alb[0].target_group_arn
   ecr_repository_name = var.ecr_repository_name
+  s3_bucket_arn       = module.s3.bucket_arn
+  secret_arn          = module.rds[0].master_user_secret_arn
 }
 
 module "bastion" {
@@ -101,7 +109,6 @@ module "rds" {
   cluster_identifier      = var.rds_cluster_identifier
   database_name           = var.database_name
   master_username         = var.master_username
-  master_password         = var.master_password
   vpc_id                  = module.vpc.vpc_id
   private_subnet_ids      = module.vpc.private_subnet_ids
   ecs_security_group_id   = module.ecs[0].security_group_id
@@ -109,10 +116,5 @@ module "rds" {
   db_subnet_group_name    = var.db_subnet_group_name
 }
 
-module "servicemanager" {
-  count  = var.environment == "prod" ? 1 : 0
-  source = "./modules/servicemanager"
 
-  rds_master_user_secret_arn = module.rds[0].master_user_secret_arn
-}
 

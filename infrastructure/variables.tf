@@ -101,11 +101,7 @@ variable "master_username" {
   type        = string
 }
 
-variable "master_password" {
-  description = "Master password for the database"
-  type        = string
-  sensitive   = true
-}
+
 
 variable "db_subnet_group_name" {
   description = "Name of the DB subnet group"

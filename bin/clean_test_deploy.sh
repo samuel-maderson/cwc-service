@@ -1,11 +1,53 @@
 #!/bin/bash
 
+echo "Choose environment:"
+echo "1) Development (dev)"
+echo "2) Production (prod)"
+read -p "Enter environment choice (1 or 2): " env_choice
+
+if [ "$env_choice" = "1" ]; then
+    ENVIRONMENT="dev"
+elif [ "$env_choice" = "2" ]; then
+    ENVIRONMENT="prod"
+else
+    echo "Invalid environment choice. Exiting."
+    exit 1
+fi
+
+echo "Selected environment: $ENVIRONMENT"
+echo ""
 echo "Choose deployment type:"
 echo "1) Clean and deploy (removes existing state)"
 echo "2) Simple deploy (keeps existing state)"
-read -p "Enter your choice (1 or 2): " choice
+echo "3) Build and push Docker image to ECR only"
+read -p "Enter your choice (1, 2, or 3): " choice
 
 cd infrastructure
+
+if [ "$choice" = "3" ]; then
+    echo "Building and pushing Docker image to ECR..."
+    
+    # Get ECR repository URL
+    ECR_URL=$(terraform output -raw ecr_repository_url)
+    if [ -z "$ECR_URL" ]; then
+        echo "Error: Could not get ECR repository URL. Make sure infrastructure is deployed."
+        exit 1
+    fi
+    
+    echo "ECR Repository: $ECR_URL"
+    
+    # Login to ECR
+    aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_URL
+    
+    # Build and push Docker image
+    cd ..
+    docker build --platform linux/amd64 -t cwc-service .
+    docker tag cwc-service:latest $ECR_URL:latest
+    docker push $ECR_URL:latest
+    
+    echo "Docker image pushed successfully to ECR"
+    exit 0
+fi
 
 if [ "$choice" = "1" ]; then
     echo "Performing clean deployment..."
@@ -20,8 +62,38 @@ else
     exit 1
 fi
 
-terraform apply -var="environment=dev" --auto-approve
+terraform apply -var="environment=$ENVIRONMENT" --auto-approve
 
+# Generate .env file with terraform outputs
+echo "Generating .env file..."
+if [ "$ENVIRONMENT" = "dev" ]; then
+    RDS_ENDPOINT=$(terraform output -raw rds_dev_endpoint | sed 's/:3306$//')
+    SECRET_NAME=$(terraform output -raw rds_dev_secret_name)
+else
+    RDS_ENDPOINT=$(terraform output -raw rds_endpoint | sed 's/:3306$//')
+    SECRET_NAME=$(terraform output -raw rds_secret_name)
+fi
+
+echo "Using RDS Endpoint: $RDS_ENDPOINT"
+echo "Using Secret Name: $SECRET_NAME"
+
+cat > ../src/.env << EOF
+ENVIRONMENT=$ENVIRONMENT
+AWS_REGION=us-east-1
+RDS_ENDPOINT=$RDS_ENDPOINT
+SECRET_NAME=$SECRET_NAME
+S3_BUCKET_NAME=$(terraform output -raw s3_bucket_name)
+ECR_REPOSITORY_URL=$(terraform output -raw ecr_repository_url)
+EOF
+
+echo ".env file created successfully"
+cd ..
+echo "Building and pushing Docker image to DOCKER HUB..."
+docker build --platform linux/amd64 -t samuelmadersondev/cwc-service:7 .
+docker push samuelmadersondev/cwc-service:7
+echo "Docker image pushed successfully to DOCKER HUB"
+
+cd infrastructure
 BUCKET_NAME=$(terraform output -json | jq -r .s3_bucket_name.value)
 echo "S3 Bucket: $BUCKET_NAME"
 

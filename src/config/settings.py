@@ -10,12 +10,12 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SECRET_NAME = 'rds-db-credentials/cwc-db-cluster-dev/master'
+    SECRET_NAME = os.environ.get('SECRET_NAME')
     DATABASE_NAME = 'cwc_catalog'
 
 class ProductionConfig(Config):
     DEBUG = False
-    SECRET_NAME = 'rds-db-credentials/cwc-db-cluster/master'
+    SECRET_NAME = os.environ.get('SECRET_NAME')
     DATABASE_NAME = 'cwc_catalog'
 
 config = {

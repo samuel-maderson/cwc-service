@@ -1,16 +1,3 @@
-resource "aws_ecr_repository" "app" {
-  name                 = var.ecr_repository_name
-  image_tag_mutability = "MUTABLE"
-
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-
-  tags = {
-    Name = var.ecr_repository_name
-  }
-}
-
 resource "aws_ecs_cluster" "main" {
   name = var.cluster_name
 }
@@ -22,35 +9,36 @@ resource "aws_ecs_task_definition" "app" {
   cpu                      = var.cpu
   memory                   = var.memory
   execution_role_arn       = aws_iam_role.ecs_execution_role.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([
     {
       name  = var.container_name
       image = var.container_image
       essential = true
-      command = ["/usr/sbin/apache2", "-D", "FOREGROUND"]
-      environment = [
-        {
-          name  = "APACHE_RUN_DIR"
-          value = "/var/run/apache2"
-        },
-        {
-          name  = "APACHE_RUN_USER"
-          value = "www-data"
-        },
-        {
-          name  = "APACHE_RUN_GROUP"
-          value = "www-data"
-        },
-        {
-          name  = "APACHE_LOG_DIR"
-          value = "/var/log/apache2"
-        },
-        {
-          name  = "APACHE_PID_FILE"
-          value = "/var/run/apache2/apache2.pid"
-        }
-      ]
+      command = ["python","app.py"]
+      # environment = [
+      #   {
+      #     name  = "APACHE_RUN_DIR"
+      #     value = "/var/run/apache2"
+      #   },
+      #   {
+      #     name  = "APACHE_RUN_USER"
+      #     value = "www-data"
+      #   },
+      #   {
+      #     name  = "APACHE_RUN_GROUP"
+      #     value = "www-data"
+      #   },
+      #   {
+      #     name  = "APACHE_LOG_DIR"
+      #     value = "/var/log/apache2"
+      #   },
+      #   {
+      #     name  = "APACHE_PID_FILE"
+      #     value = "/var/run/apache2/apache2.pid"
+      #   }
+      # ]
       portMappings = [
         {
           containerPort = var.container_port
@@ -75,6 +63,7 @@ resource "aws_ecs_service" "app" {
   task_definition = aws_ecs_task_definition.app.arn
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
+  enable_execute_command = true
 
   network_configuration {
     subnets         = var.subnet_ids
@@ -162,4 +151,85 @@ resource "aws_cloudwatch_log_group" "ecs_cluster" {
 resource "aws_cloudwatch_log_group" "app" {
   name              = "/ecs/${var.cluster_name}/app"
   retention_in_days = 7
+}
+
+resource "aws_iam_role" "ecs_task_role" {
+  name = "${var.cluster_name}-ecs-task-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "ecs_exec_policy" {
+  name = "${var.cluster_name}-ecs-exec-policy"
+  role = aws_iam_role.ecs_task_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "s3_access_policy" {
+  name = "${var.cluster_name}-s3-access-policy"
+  role = aws_iam_role.ecs_task_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          var.s3_bucket_arn,
+          "${var.s3_bucket_arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "secrets_access_policy" {
+  name = "${var.cluster_name}-secrets-access-policy"
+  role = aws_iam_role.ecs_task_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = var.secret_arn
+      }
+    ]
+  })
 }

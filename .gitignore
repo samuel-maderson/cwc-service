@@ -8,6 +8,9 @@ infrastructure/*.tfvars.backup
 infrastructure/crash.log
 infrastructure/crash.*.log
 
+# Application
+src/.env
+
 # IDE
 .vscode/
 .idea/
