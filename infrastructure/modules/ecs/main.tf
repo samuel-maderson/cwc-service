@@ -206,10 +206,7 @@ resource "aws_iam_role_policy" "s3_access_policy" {
           "s3:DeleteObject",
           "s3:ListBucket"
         ]
-        Resource = [
-          var.s3_bucket_arn,
-          "${var.s3_bucket_arn}/*"
-        ]
+        Resource = "*"
       }
     ]
   })
@@ -225,10 +222,9 @@ resource "aws_iam_role_policy" "secrets_access_policy" {
       {
         Effect = "Allow"
         Action = [
-          "secretsmanager:GetSecretValue",
-          "secretsmanager:DescribeSecret"
+          "secretsmanager:*"
         ]
-        Resource = var.secret_arn
+        Resource = "*"
       }
     ]
   })

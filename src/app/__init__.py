@@ -13,19 +13,14 @@ def create_app(config_name=None):
     app_config = config[config_name]
     app.config.from_object(app_config)
     
-    try:
-        print(f"DEBUG: Environment: {os.getenv('ENVIRONMENT')}")
-        print(f"DEBUG: RDS Endpoint: {os.getenv('RDS_ENDPOINT')}")
-        print(f"DEBUG: Secret Name: {app_config.SECRET_NAME}")
-        
-        db_creds = get_db_credentials(app_config)
-        database_uri = f"mysql+pymysql://{db_creds['username']}:{db_creds['password']}@{db_creds['host']}:{db_creds['port']}/{db_creds['database']}"
-        print(f"DEBUG: Database URI: mysql+pymysql://{db_creds['username']}:***@{db_creds['host']}:{db_creds['port']}/{db_creds['database']}")
-        app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
-    except Exception as e:
-        print(f"ERROR: Failed to get database credentials: {e}")
-        app.logger.error(f"Failed to get database credentials: {e}")
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fallback.db'
+    print(f"DEBUG: Environment: {os.getenv('ENVIRONMENT')}")
+    print(f"DEBUG: RDS Endpoint: {os.getenv('RDS_ENDPOINT')}")
+    print(f"DEBUG: Secret Name: {app_config.SECRET_NAME}")
+    
+    db_creds = get_db_credentials(app_config)
+    database_uri = f"mysql+pymysql://{db_creds['username']}:{db_creds['password']}@{db_creds['host']}:{db_creds['port']}/{db_creds['database']}"
+    print(f"DEBUG: Database URI: mysql+pymysql://{db_creds['username']}:***@{db_creds['host']}:{db_creds['port']}/{db_creds['database']}")
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
