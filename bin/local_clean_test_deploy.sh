@@ -71,17 +71,24 @@ EOF
 
 echo ".env file created successfully"
 cd ..
-# Get container image from terraform.tfvars
-CONTAINER_IMAGE=$(grep "container_image" infrastructure/terraform.tfvars | cut -d'=' -f2 | tr -d ' "')
-if [ -z "$CONTAINER_IMAGE" ]; then
-    echo "Error: Could not get container_image from terraform.tfvars"
+# Get ECR repository URL from terraform output
+cd infrastructure
+ECR_URL=$(terraform output -raw ecr_repository_url)
+cd ..
+if [ -z "$ECR_URL" ]; then
+    echo "Error: Could not get ECR repository URL"
     exit 1
 fi
 
-echo "Building and pushing Docker image: $CONTAINER_IMAGE"
-docker build --platform linux/amd64 -t $CONTAINER_IMAGE .
-docker push $CONTAINER_IMAGE
-echo "Docker image pushed successfully: $CONTAINER_IMAGE"
+echo "Building and pushing Docker image to ECR: $ECR_URL"
+# Login to ECR
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_URL
+
+# Build and push
+docker build --platform linux/amd64 -t cwc-service .
+docker tag cwc-service:latest $ECR_URL:latest
+docker push $ECR_URL:latest
+echo "Docker image pushed successfully to ECR"
 
 cd infrastructure
 BUCKET_NAME=$(terraform output -json | jq -r .s3_bucket_name.value)
