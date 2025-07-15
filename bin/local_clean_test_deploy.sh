@@ -23,10 +23,19 @@ read -p "Enter your choice (1, 2): " choice
 
 cd infrastructure
 
+# Ensure backend infrastructure exists
+echo "Checking Terraform backend..."
+aws cloudformation describe-stacks --stack-name cwc-terraform-backend --region us-east-1 > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo "Backend not found. Setting up..."
+    cd ..
+    ./bin/setup_backend.sh
+    cd infrastructure
+fi
+
 if [ "$choice" = "1" ]; then
     echo "Performing clean deployment..."
     rm -rf .terraform*
-    rm -f terraform.tfstate*
     terraform init -upgrade
 elif [ "$choice" = "2" ]; then
     echo "Performing simple deployment..."
