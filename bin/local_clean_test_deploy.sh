@@ -19,35 +19,9 @@ echo ""
 echo "Choose deployment type:"
 echo "1) Clean and deploy (removes existing state)"
 echo "2) Simple deploy (keeps existing state)"
-echo "3) Build and push Docker image to ECR only"
-read -p "Enter your choice (1, 2, or 3): " choice
+read -p "Enter your choice (1, 2): " choice
 
 cd infrastructure
-
-if [ "$choice" = "3" ]; then
-    echo "Building and pushing Docker image to ECR..."
-    
-    # Get ECR repository URL
-    ECR_URL=$(terraform output -raw ecr_repository_url)
-    if [ -z "$ECR_URL" ]; then
-        echo "Error: Could not get ECR repository URL. Make sure infrastructure is deployed."
-        exit 1
-    fi
-    
-    echo "ECR Repository: $ECR_URL"
-    
-    # Login to ECR
-    aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_URL
-    
-    # Build and push Docker image
-    cd ..
-    docker build --platform linux/amd64 -t cwc-service .
-    docker tag cwc-service:latest $ECR_URL:latest
-    docker push $ECR_URL:latest
-    
-    echo "Docker image pushed successfully to ECR"
-    exit 0
-fi
 
 if [ "$choice" = "1" ]; then
     echo "Performing clean deployment..."
@@ -88,10 +62,17 @@ EOF
 
 echo ".env file created successfully"
 cd ..
-echo "Building and pushing Docker image to DOCKER HUB..."
-docker build --platform linux/amd64 -t samuelmadersondev/cwc-service:7 .
-docker push samuelmadersondev/cwc-service:7
-echo "Docker image pushed successfully to DOCKER HUB"
+# Get container image from terraform.tfvars
+CONTAINER_IMAGE=$(grep "container_image" infrastructure/terraform.tfvars | cut -d'=' -f2 | tr -d ' "')
+if [ -z "$CONTAINER_IMAGE" ]; then
+    echo "Error: Could not get container_image from terraform.tfvars"
+    exit 1
+fi
+
+echo "Building and pushing Docker image: $CONTAINER_IMAGE"
+docker build --platform linux/amd64 -t $CONTAINER_IMAGE .
+docker push $CONTAINER_IMAGE
+echo "Docker image pushed successfully: $CONTAINER_IMAGE"
 
 cd infrastructure
 BUCKET_NAME=$(terraform output -json | jq -r .s3_bucket_name.value)

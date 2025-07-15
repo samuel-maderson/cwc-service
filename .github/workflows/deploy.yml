@@ -1,0 +1,87 @@
+name: Deploy CWC Service
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.9.0
+    
+    - name: Install Session Manager Plugin
+      run: |
+        curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
+        sudo dpkg -i session-manager-plugin.deb
+    
+    - name: Set environment
+      run: |
+        echo "ENVIRONMENT=${{ vars.DEPLOY_ENVIRONMENT }}" >> $GITHUB_ENV
+    
+    - name: Deploy infrastructure
+      run: |
+        cd infrastructure
+        terraform init -upgrade
+        terraform apply -var="environment=$ENVIRONMENT" -auto-approve
+    
+    - name: Generate .env file
+      run: |
+        cd infrastructure
+        if [ "$ENVIRONMENT" = "dev" ]; then
+          RDS_ENDPOINT=$(terraform output -raw rds_dev_endpoint | sed 's/:3306$//')
+          SECRET_NAME=$(terraform output -raw rds_dev_secret_name)
+        else
+          RDS_ENDPOINT=$(terraform output -raw rds_endpoint | sed 's/:3306$//')
+          SECRET_NAME=$(terraform output -raw rds_secret_name)
+        fi
+        
+        cat > ../src/.env << EOF
+        ENVIRONMENT=$ENVIRONMENT
+        AWS_REGION=us-east-1
+        RDS_ENDPOINT=$RDS_ENDPOINT
+        SECRET_NAME=$SECRET_NAME
+        S3_BUCKET_NAME=$(terraform output -raw s3_bucket_name)
+        ECR_REPOSITORY_URL=$(terraform output -raw ecr_repository_url)
+        EOF
+    
+    - name: Build and push Docker image
+      run: |
+        CONTAINER_IMAGE=$(grep "container_image" infrastructure/terraform.tfvars | cut -d'=' -f2 | tr -d ' "')
+        echo "Building image: $CONTAINER_IMAGE"
+        docker build --platform linux/amd64 -t $CONTAINER_IMAGE .
+        echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+        docker push $CONTAINER_IMAGE
+    
+    - name: Upload images to S3
+      run: |
+        cd infrastructure
+        BUCKET_NAME=$(terraform output -raw s3_bucket_name)
+        if [ -d "../src/imgs/" ]; then
+          aws s3 sync ../src/imgs/ s3://$BUCKET_NAME --delete
+        fi
+    
+    - name: Run database migration
+      run: |
+        cd infrastructure
+        TASK_ARN=$(aws ecs list-tasks --cluster cwc-cluster --service-name cwc-service --query 'taskArns[0]' --output text)
+        if [ "$TASK_ARN" != "None" ] && [ -n "$TASK_ARN" ]; then
+          aws ecs execute-command \
+            --cluster cwc-cluster \
+            --task "$TASK_ARN" \
+            --container cwc-app \
+            --command "bash -c 'cd /app && mysql -h \$(cat .env | grep RDS_ENDPOINT | cut -d= -f2) -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$(cat .env | grep SECRET_NAME | cut -d= -f2) --query SecretString --output text | jq -r .password) cwc_catalog < migrations/init_vehicles.sql'"
+        fi
