@@ -42,11 +42,11 @@ jobs:
       run: |
         cd infrastructure
         if [ "$ENVIRONMENT" = "dev" ]; then
-          RDS_ENDPOINT=$(terraform output -raw rds_dev_endpoint | sed 's/:3306$//')
-          SECRET_NAME=$(terraform output -raw rds_dev_secret_name)
+          RDS_ENDPOINT=$(terraform output rds_dev_endpoint | tr -d '"' | sed 's/:3306$//')
+          SECRET_NAME=$(terraform output rds_dev_secret_name | tr -d '"')
         else
-          RDS_ENDPOINT=$(terraform output -raw rds_endpoint | sed 's/:3306$//')
-          SECRET_NAME=$(terraform output -raw rds_secret_name)
+          RDS_ENDPOINT=$(terraform output rds_endpoint | tr -d '"' | sed 's/:3306$//')
+          SECRET_NAME=$(terraform output rds_secret_name | tr -d '"')
         fi
         
         cat > ../src/.env << EOF
@@ -54,8 +54,8 @@ jobs:
         AWS_REGION=us-east-1
         RDS_ENDPOINT=$RDS_ENDPOINT
         SECRET_NAME=$SECRET_NAME
-        S3_BUCKET_NAME=$(terraform output -raw s3_bucket_name)
-        ECR_REPOSITORY_URL=$(terraform output -raw ecr_repository_url)
+        S3_BUCKET_NAME=$(terraform output s3_bucket_name | tr -d '"')
+        ECR_REPOSITORY_URL=$(terraform output ecr_repository_url | tr -d '"')
         EOF
     
     - name: Build and push Docker image
@@ -69,7 +69,7 @@ jobs:
     - name: Upload images to S3
       run: |
         cd infrastructure
-        BUCKET_NAME=$(terraform output -raw s3_bucket_name)
+        BUCKET_NAME=$(terraform output s3_bucket_name | tr -d '"')
         if [ -d "../src/imgs/" ]; then
           aws s3 sync ../src/imgs/ s3://$BUCKET_NAME --delete
         fi
