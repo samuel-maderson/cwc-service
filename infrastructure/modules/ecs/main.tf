@@ -3,7 +3,7 @@ resource "aws_ecs_cluster" "main" {
 }
 
 resource "aws_ecs_task_definition" "app" {
-  family                   = "${var.task_family}-${formatdate("YYYYMMDD-hhmm", timestamp())}"
+  family                   = var.task_family
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.cpu
@@ -28,7 +28,7 @@ resource "aws_ecs_task_definition" "app" {
         },
         {
           name  = "RDS_ENDPOINT"
-          value = var.rds_endpoint
+          value = replace(var.rds_endpoint, ":3306", "")
         },
         {
           name  = "SECRET_NAME"
