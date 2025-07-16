@@ -31,7 +31,7 @@ jobs:
       run: |
         ./bin/decrypt_secrets.sh "${{ secrets.ENCRYPTION_KEY }}"
     - name: Upload decrypted files
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: decrypted-secrets
         path: infrastructure/modules/api_auth/main.tf
@@ -43,7 +43,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Download decrypted files
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: decrypted-secrets
         path: infrastructure/modules/api_auth/
@@ -71,7 +71,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Download decrypted files
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: decrypted-secrets
         path: infrastructure/modules/api_auth/
@@ -112,7 +112,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Download decrypted files
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: decrypted-secrets
         path: infrastructure/modules/api_auth/
