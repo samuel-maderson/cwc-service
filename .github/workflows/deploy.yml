@@ -142,5 +142,5 @@ jobs:
             --task "$TASK_ARN" \
             --container cwc-app \
             --interactive \
-            --command "bash -c 'cd /app && mysql -h \$(cat .env | grep RDS_ENDPOINT | cut -d= -f2) -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$(cat .env | grep SECRET_NAME | cut -d= -f2) --query SecretString --output text | jq -r .password) cwc_catalog < migrations/init_vehicles.sql'"
+            --command "bash -c 'cd /app && mysql -h \$RDS_ENDPOINT -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$SECRET_NAME --query SecretString --output text | jq -r .password) cwc_catalog < migrations/init_vehicles.sql'"
         fi

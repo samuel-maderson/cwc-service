@@ -1,42 +1,209 @@
-# cwc-service
-## Vehicle Catalog API
+# CWC Vehicle Catalog API
 
-A REST API for querying and listing vehicle catalog with comprehensive vehicle information.
+A secure REST API for querying vehicle catalog data with JWT authentication and comprehensive vehicle information.
 
 ## Features
-- Query and list Audi vehicles from catalog
-- Comprehensive vehicle data model with relevant sales information
-- RESTful endpoints for vehicle catalog operations
 
-## Development Environment
+- **JWT Authentication** - Secure API access with token-based authentication
+- **Vehicle Catalog** - Query and list vehicles from database
+- **AWS Integration** - Uses RDS MySQL, S3 for images, Secrets Manager for credentials
+- **Multi-Environment** - Supports development and production deployments
+- **Containerized** - Docker-based deployment with ECS Fargate
+- **Infrastructure as Code** - Terraform-managed AWS infrastructure
 
-The development environment deploys minimal infrastructure optimized for local testing and development. It creates only the essential components: VPC networking and a publicly accessible RDS MySQL instance. This setup allows developers to connect directly to the database from their local machines without requiring VPN or bastion host access.
+## API Endpoints
 
-### Deploy Development Infrastructure
+- `POST /login` - Authenticate and get JWT token
+- `GET /vehicles` - List all vehicles (requires JWT)
+- `GET /vehicles/<id>` - Get specific vehicle (requires JWT)
+- `GET /health` - Health check (public)
+
+## Local Development
+
+### Prerequisites
+
+- AWS CLI configured
+- Docker installed
+- MySQL client (`brew install mysql`)
+- Terraform installed
+
+### Deploy Development Environment
 
 ```bash
+# Run the deployment script
+./bin/local_clean_test_deploy.sh
+
+# Select:
+# 1) Development (dev)
+# 1) Clean and deploy
+# Enter encryption key when prompted
+```
+
+This will:
+- Deploy AWS infrastructure (VPC, RDS, S3, ECR, Secrets Manager)
+- Build Docker image locally
+- Start container on port 80
+- Run database migration
+- Upload sample images to S3
+
+### Test Locally
+
+```bash
+# 1. Get authentication token
+curl -X POST http://localhost/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "<password_from_secrets_manager>"}'
+
+# 2. Use token to access vehicles
+curl http://localhost/vehicles \
+  -H "Authorization: Bearer <your_jwt_token>"
+
+# 3. Get specific vehicle
+curl http://localhost/vehicles/1 \
+  -H "Authorization: Bearer <your_jwt_token>"
+
+# 4. Health check (no auth required)
+curl http://localhost/health
+```
+
+## Production Deployment
+
+### GitHub Actions
+
+Production deployment is automated via GitHub Actions on push to `main` branch.
+
+**Required Secrets:**
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY` 
+- `ENCRYPTION_KEY`
+
+**Required Variables:**
+- `DEPLOY_ENVIRONMENT` (set to "prod")
+
+### Manual Production Deploy
+
+```bash
+# Run deployment script
+./bin/local_clean_test_deploy.sh
+
+# Select:
+# 2) Production (prod)
+# 1) Clean and deploy
+# Enter encryption key when prompted
+```
+
+## Authentication
+
+### Get API Credentials
+
+Credentials are stored in AWS Secrets Manager:
+
+```bash
+# Get secret name
 cd infrastructure
-terraform init
-terraform apply -var="environment=dev"
+terraform output api_auth_secret_name
+
+# Retrieve credentials
+aws secretsmanager get-secret-value \
+  --secret-id <secret_name> \
+  --query SecretString --output text | jq .
 ```
 
-### Connect to Development Database
-
-Once deployed, you can connect directly to the RDS instance from your local machine:
+### Generate JWT Token
 
 ```bash
-# Install MySQL client (Mac)
-brew install mysql
+# Login request
+curl -X POST <api_url>/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "<password_from_secrets_manager>"
+  }'
 
-# Get the database endpoint
-terraform output rds_dev_endpoint
-
-# Connect to dev database
-mysql -h <rds_dev_endpoint> --skip-ssl --default-auth=mysql_native_password -uadmin -p
-
-# Alternative with MariaDB client (recommended for better compatibility)
-brew install mariadb
-mariadb -h <rds_dev_endpoint> -uadmin -p --skip-ssl
+# Response:
+# {"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."}
 ```
 
-The development RDS instance uses AWS Secrets Manager for password management with automatic 30-day rotation. Retrieve the current password from AWS Secrets Manager console or use the AWS CLI to get credentials programmatically.
+### Use JWT Token
+
+```bash
+# Include token in Authorization header
+curl <api_url>/vehicles \
+  -H "Authorization: Bearer <jwt_token>"
+```
+
+### Test Production
+
+```bash
+# Get ALB DNS name from Terraform output
+cd infrastructure
+terraform output api_url
+
+# Test endpoints (replace <alb_dns> with actual DNS)
+curl -X POST https://<alb_dns>/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "<password_from_secrets_manager>"}'
+
+curl https://<alb_dns>/vehicles \
+  -H "Authorization: Bearer <your_jwt_token>"
+```
+
+## Configuration
+
+### Environment Variables
+
+- **Local Development**: Uses `.env` file generated by deployment script
+- **Production**: Uses ECS task definition environment variables
+
+The `.env` file is only necessary for local development. In production, all configuration is managed through ECS task environment variables populated from Terraform outputs and AWS Secrets Manager.
+
+### Security
+
+- **Encrypted Secrets** - Terraform files with credentials are encrypted
+- **JWT Authentication** - All vehicle endpoints require valid JWT token
+- **AWS Secrets Manager** - Database and API credentials stored securely
+- **VPC Isolation** - Production resources in private subnets
+- **IAM Roles** - Least privilege access for ECS tasks
+
+## Architecture
+
+### Development
+- **VPC** with public subnets
+- **RDS MySQL** (publicly accessible for direct connection)
+- **Local Docker** container
+- **Direct database** access for development
+
+### Production
+- **VPC** with public/private subnets
+- **Application Load Balancer** (public)
+- **ECS Fargate** (private subnets)
+- **RDS MySQL** (private subnets)
+- **Bastion Host** for database access
+- **ECR** for container images
+- **S3** for vehicle images
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Authentication Failed**
+   - Check credentials in Secrets Manager
+   - Ensure JWT token is valid and not expired
+
+2. **Database Connection**
+   - Verify RDS endpoint and security groups
+   - Check Secrets Manager for database password
+
+3. **Container Issues**
+   - Check ECS logs in CloudWatch
+   - Verify environment variables in task definition
+
+### Logs
+
+```bash
+# View container logs
+aws logs tail /ecs/cwc-cluster/app --follow
+
+# View specific log stream
+aws logs describe-log-streams --log-group-name /ecs/cwc-cluster/app
+```
