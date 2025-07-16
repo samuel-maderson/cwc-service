@@ -104,6 +104,10 @@ jobs:
         docker tag cwc-service:$IMAGE_TAG $ECR_URL:latest
         docker push $ECR_URL:$IMAGE_TAG
         docker push $ECR_URL:latest
+        
+        # Update ECS service with new image
+        cd infrastructure
+        terraform apply -var="environment=${{ needs.setup.outputs.environment }}" -var="container_image=$ECR_URL:$IMAGE_TAG" -auto-approve
     - name: Upload images to S3
       run: |
         cd infrastructure

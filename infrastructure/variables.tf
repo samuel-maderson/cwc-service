@@ -28,7 +28,7 @@ variable "container_name" {
 variable "container_image" {
   description = "Docker image for the container"
   type        = string
-  default     = "alpine:latest"
+  default     = "134819843120.dkr.ecr.us-east-1.amazonaws.com/cwc-service:latest"
 }
 
 variable "service_name" {
