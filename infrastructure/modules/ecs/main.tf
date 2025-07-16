@@ -17,28 +17,36 @@ resource "aws_ecs_task_definition" "app" {
       image = var.container_image
       essential = true
       command = ["python","app.py"]
-      # environment = [
-      #   {
-      #     name  = "APACHE_RUN_DIR"
-      #     value = "/var/run/apache2"
-      #   },
-      #   {
-      #     name  = "APACHE_RUN_USER"
-      #     value = "www-data"
-      #   },
-      #   {
-      #     name  = "APACHE_RUN_GROUP"
-      #     value = "www-data"
-      #   },
-      #   {
-      #     name  = "APACHE_LOG_DIR"
-      #     value = "/var/log/apache2"
-      #   },
-      #   {
-      #     name  = "APACHE_PID_FILE"
-      #     value = "/var/run/apache2/apache2.pid"
-      #   }
-      # ]
+      environment = [
+        {
+          name  = "ENVIRONMENT"
+          value = var.environment
+        },
+        {
+          name  = "AWS_REGION"
+          value = var.aws_region
+        },
+        {
+          name  = "RDS_ENDPOINT"
+          value = var.rds_endpoint
+        },
+        {
+          name  = "SECRET_NAME"
+          value = var.secret_name
+        },
+        {
+          name  = "API_AUTH_SECRET_NAME"
+          value = var.api_auth_secret_name
+        },
+        {
+          name  = "S3_BUCKET_NAME"
+          value = var.s3_bucket_name
+        },
+        {
+          name  = "ECR_REPOSITORY_URL"
+          value = var.ecr_repository_url
+        }
+      ]
       portMappings = [
         {
           containerPort = var.container_port

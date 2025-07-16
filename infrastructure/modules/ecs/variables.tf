@@ -89,3 +89,33 @@ variable "alb_security_group_id" {
   type        = string
   default     = null
 }
+
+variable "api_auth_secret_name" {
+  description = "Name of the API auth secret"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+}
+
+variable "rds_endpoint" {
+  description = "RDS endpoint"
+  type        = string
+}
+
+variable "secret_name" {
+  description = "RDS secret name"
+  type        = string
+}
+
+variable "s3_bucket_name" {
+  description = "S3 bucket name"
+  type        = string
+}
+
+variable "ecr_repository_url" {
+  description = "ECR repository URL"
+  type        = string
+}

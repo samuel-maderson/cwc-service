@@ -83,6 +83,12 @@ module "ecs" {
   ecr_repository_name = var.ecr_repository_name
   s3_bucket_arn       = module.s3.bucket_arn
   secret_arn          = module.rds[0].master_user_secret_arn
+  api_auth_secret_name = module.api_auth.secret_name
+  environment         = var.environment
+  rds_endpoint        = module.rds[0].db_endpoint
+  secret_name         = module.rds[0].master_user_secret_name
+  s3_bucket_name      = module.s3.bucket_name
+  ecr_repository_url  = module.ecr.repository_url
 }
 
 module "bastion" {
