@@ -17,10 +17,18 @@ def create_app(config_name=None):
     print(f"DEBUG: RDS Endpoint: {os.getenv('RDS_ENDPOINT')}")
     print(f"DEBUG: Secret Name: {app_config.SECRET_NAME}")
     
-    db_creds = get_db_credentials(app_config)
-    database_uri = f"mysql+pymysql://{db_creds['username']}:{db_creds['password']}@{db_creds['host']}:{db_creds['port']}/{db_creds['database']}"
-    print(f"DEBUG: Database URI: mysql+pymysql://{db_creds['username']}:***@{db_creds['host']}:{db_creds['port']}/{db_creds['database']}")
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
+    # Database connection with error handling
+    try:
+        db_creds = get_db_credentials(app_config)
+        database_uri = f"mysql+pymysql://{db_creds['username']}:{db_creds['password']}@{db_creds['host']}:{db_creds['port']}/{db_creds['database']}"
+        print(f"DEBUG: Database URI: mysql+pymysql://{db_creds['username']}:***@{db_creds['host']}:{db_creds['port']}/{db_creds['database']}")
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
+        app.config['DB_CONNECTION_ERROR'] = False
+    except Exception as e:
+        print(f"ERROR: Database connection failed: {str(e)}")
+        print("WARNING: API will run without database functionality")
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'  # Fallback
+        app.config['DB_CONNECTION_ERROR'] = True
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
