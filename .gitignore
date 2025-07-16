@@ -1,25 +1,33 @@
 # Terraform
-infrastructure/.terraform/
-infrastructure/.terraform.lock.hcl
-infrastructure/terraform.tfstate
-infrastructure/terraform.tfstate.backup
-infrastructure/*.tfplan
-infrastructure/*.tfvars.backup
-infrastructure/crash.log
-infrastructure/crash.*.log
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
 
-# Application
-src/.env
+# Environment files
+.env
+*.env
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Decrypted secrets
+infrastructure/modules/api_auth/main.tf
+
+# Logs
+*.log
 
 # OS
 .DS_Store
 Thumbs.db
-
-# Logs
-*.log

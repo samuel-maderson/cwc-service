@@ -29,6 +29,12 @@ module "s3" {
   bucket_name = "cwc-vehicle-images-${random_id.bucket_suffix.hex}"
 }
 
+module "api_auth" {
+  source = "./modules/api_auth"
+
+  environment = var.environment
+}
+
 resource "random_id" "bucket_suffix" {
   byte_length = 4
 }

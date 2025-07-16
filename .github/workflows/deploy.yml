@@ -33,6 +33,10 @@ jobs:
       run: |
         echo "ENVIRONMENT=${{ vars.DEPLOY_ENVIRONMENT }}" >> $GITHUB_ENV
     
+    - name: Decrypt secrets
+      run: |
+        ./bin/decrypt_secrets.sh "${{ secrets.ENCRYPTION_KEY }}"
+    
     - name: Deploy infrastructure
       run: |
         cd infrastructure

@@ -42,3 +42,8 @@ output "ecr_repository_url" {
   description = "URL of the ECR repository"
   value       = module.ecr.repository_url
 }
+
+output "api_auth_secret_name" {
+  description = "API authentication secret name"
+  value       = module.api_auth.secret_name
+}
