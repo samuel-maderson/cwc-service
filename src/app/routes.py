@@ -109,17 +109,6 @@ def create_vehicle():
             model=data.get('model'),
             year=int(data.get('year')) if data.get('year') else None,
             price=float(data.get('price')) if data.get('price') else None,
-            mileage=int(data.get('mileage')) if data.get('mileage') else None,
-            color=data.get('color'),
-            transmission=data.get('transmission'),
-            fuel_type=data.get('fuel_type'),
-            engine_size=data.get('engine_size'),
-            doors=int(data.get('doors')) if data.get('doors') else None,
-            body_style=data.get('body_style'),
-            drivetrain=data.get('drivetrain'),
-            condition=data.get('condition'),
-            location=data.get('location'),
-            description=data.get('description'),
             image_url=image_url or data.get('image_url')
         )
         db.session.add(vehicle)
@@ -147,10 +136,7 @@ def update_vehicle(vehicle_id):
         vehicle = Vehicle.query.get_or_404(vehicle_id)
         data = request.get_json()
         
-        for field in ['make', 'model', 'year', 'price', 'mileage', 'color', 
-                     'transmission', 'fuel_type', 'engine_size', 'doors', 
-                     'body_style', 'drivetrain', 'condition', 'location', 
-                     'description', 'image_url']:
+        for field in ['make', 'model', 'year', 'price', 'image_url']:
             if field in data:
                 setattr(vehicle, field, data[field])
         
