@@ -3,69 +3,93 @@ name: Deploy CWC Service
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Job to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - infrastructure
+        - docker
+        - migration
 
 jobs:
-  deploy:
+  setup:
     runs-on: ubuntu-latest
-    
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
     steps:
     - uses: actions/checkout@v3
-    
+    - name: Set environment
+      id: env
+      run: |
+        echo "environment=${{ vars.DEPLOY_ENVIRONMENT }}" >> $GITHUB_OUTPUT
+    - name: Decrypt secrets
+      run: |
+        ./bin/decrypt_secrets.sh "${{ secrets.ENCRYPTION_KEY }}"
+    - name: Upload decrypted files
+      uses: actions/upload-artifact@v3
+      with:
+        name: decrypted-secrets
+        path: infrastructure/modules/api_auth/main.tf
+
+  infrastructure:
+    runs-on: ubuntu-latest
+    needs: setup
+    if: github.event.inputs.job == 'all' || github.event.inputs.job == 'infrastructure' || github.event_name == 'push'
+    steps:
+    - uses: actions/checkout@v3
+    - name: Download decrypted files
+      uses: actions/download-artifact@v3
+      with:
+        name: decrypted-secrets
+        path: infrastructure/modules/api_auth/
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
-    
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: 1.9.0
         terraform_wrapper: false
-    
-    - name: Install Session Manager Plugin
-      run: |
-        curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
-        sudo dpkg -i session-manager-plugin.deb
-    
-    - name: Set environment
-      run: |
-        echo "ENVIRONMENT=${{ vars.DEPLOY_ENVIRONMENT }}" >> $GITHUB_ENV
-    
-    - name: Decrypt secrets
-      run: |
-        ./bin/decrypt_secrets.sh "${{ secrets.ENCRYPTION_KEY }}"
-    
     - name: Deploy infrastructure
       run: |
         cd infrastructure
         terraform init -upgrade
-        terraform apply -var="environment=$ENVIRONMENT" -auto-approve
-    
-    - name: Generate .env file
-      run: |
-        cd infrastructure
-        if [ "$ENVIRONMENT" = "dev" ]; then
-          RDS_ENDPOINT=$(terraform output -raw rds_dev_endpoint | sed 's/:3306$//')
-          SECRET_NAME=$(terraform output -raw rds_dev_secret_name)
-        else
-          RDS_ENDPOINT=$(terraform output -raw rds_endpoint | sed 's/:3306$//')
-          SECRET_NAME=$(terraform output -raw rds_secret_name)
-        fi
-        
-        cat > ../src/.env << EOF
-        ENVIRONMENT=$ENVIRONMENT
-        AWS_REGION=us-east-1
-        RDS_ENDPOINT=$RDS_ENDPOINT
-        SECRET_NAME=$SECRET_NAME
-        S3_BUCKET_NAME=$(terraform output -raw s3_bucket_name)
-        ECR_REPOSITORY_URL=$(terraform output -raw ecr_repository_url)
-        EOF
-    
+        terraform apply -var="environment=${{ needs.setup.outputs.environment }}" -auto-approve
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: [setup, infrastructure]
+    if: github.event.inputs.job == 'all' || github.event.inputs.job == 'docker' || github.event_name == 'push'
+    steps:
+    - uses: actions/checkout@v3
+    - name: Download decrypted files
+      uses: actions/download-artifact@v3
+      with:
+        name: decrypted-secrets
+        path: infrastructure/modules/api_auth/
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.9.0
+        terraform_wrapper: false
     - name: Build and push Docker image
       run: |
         cd infrastructure
+        terraform init -upgrade
         ECR_URL=$(terraform output -raw ecr_repository_url)
         echo "Building image for ECR: $ECR_URL"
         cd ..
@@ -73,7 +97,6 @@ jobs:
         docker build --platform linux/amd64 -t cwc-service .
         docker tag cwc-service:latest $ECR_URL:latest
         docker push $ECR_URL:latest
-    
     - name: Upload images to S3
       run: |
         cd infrastructure
@@ -81,10 +104,37 @@ jobs:
         if [ -d "../src/imgs/" ]; then
           aws s3 sync ../src/imgs/ s3://$BUCKET_NAME --delete
         fi
-    
+
+  migration:
+    runs-on: ubuntu-latest
+    needs: [setup, docker]
+    if: github.event.inputs.job == 'all' || github.event.inputs.job == 'migration' || github.event_name == 'push'
+    steps:
+    - uses: actions/checkout@v3
+    - name: Download decrypted files
+      uses: actions/download-artifact@v3
+      with:
+        name: decrypted-secrets
+        path: infrastructure/modules/api_auth/
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.9.0
+        terraform_wrapper: false
+    - name: Install Session Manager Plugin
+      run: |
+        curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
+        sudo dpkg -i session-manager-plugin.deb
     - name: Run database migration
       run: |
         cd infrastructure
+        terraform init -upgrade
         TASK_ARN=$(aws ecs list-tasks --cluster cwc-cluster --service-name cwc-service --query 'taskArns[0]' --output text)
         if [ "$TASK_ARN" != "None" ] && [ -n "$TASK_ARN" ]; then
           aws ecs execute-command \
