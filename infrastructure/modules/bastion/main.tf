@@ -61,8 +61,7 @@ resource "aws_instance" "bastion" {
   user_data = <<-EOF
     #!/bin/bash
     yum update -y
-    yum install -y https://dev.mysql.com/get/mysql80-community-release-el7-5.noarch.rpm
-    yum install -y --nogpgcheck mysql-community-client
+    yum install -y mysql
     systemctl enable amazon-ssm-agent
     systemctl start amazon-ssm-agent
   EOF

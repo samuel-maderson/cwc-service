@@ -64,6 +64,7 @@ resource "aws_ecs_service" "app" {
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
   enable_execute_command = true
+  force_new_deployment = true
 
   network_configuration {
     subnets         = var.subnet_ids
