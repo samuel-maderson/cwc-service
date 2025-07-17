@@ -167,6 +167,8 @@ The `.env` file is only necessary for local development. In production, all conf
 
 ## Architecture
 
+![CWC API Architecture](docs/images/cwc-api-architecture.png)
+
 ### Development
 - **VPC** with public subnets
 - **RDS MySQL** (publicly accessible for direct connection)

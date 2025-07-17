@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CWC Vehicle Catalog API</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            margin: 0;
+        }
+        h2 {
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #3498db;
+        }
+        pre {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            overflow-x: auto;
+        }
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .endpoint {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .method {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .get {
+            background-color: #2ecc71;
+        }
+        .post {
+            background-color: #3498db;
+        }
+        .put {
+            background-color: #f39c12;
+        }
+        .delete {
+            background-color: #e74c3c;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>CWC Vehicle Catalog API</h1>
+        <p>A secure REST API for querying vehicle catalog data with JWT authentication</p>
+    </header>
+
+    <section>
+        <h2>Overview</h2>
+        <p>
+            The CWC Vehicle Catalog API provides access to a comprehensive database of vehicles with detailed information.
+            All endpoints (except health check) require JWT authentication for secure access.
+        </p>
+    </section>
+
+    <section>
+        <h2>Features</h2>
+        <ul>
+            <li><strong>JWT Authentication</strong> - Secure API access with token-based authentication</li>
+            <li><strong>Vehicle Catalog</strong> - Query and list vehicles from database</li>
+            <li><strong>AWS Integration</strong> - Uses RDS MySQL, S3 for images, Secrets Manager for credentials</li>
+            <li><strong>Containerized</strong> - Docker-based deployment with ECS Fargate</li>
+            <li><strong>Infrastructure as Code</strong> - Terraform-managed AWS infrastructure</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Authentication</h2>
+        <p>
+            All API endpoints (except <code>/health</code>) require a valid JWT token in the Authorization header.
+            To obtain a token, you need to authenticate using the login endpoint.
+        </p>
+
+        <div class="endpoint">
+            <span class="method post">POST</span> <code>/login</code>
+            <p>Authenticate and receive a JWT token</p>
+            <h3>Request</h3>
+            <pre><code>{
+  "username": "your_username",
+  "password": "your_password"
+}</code></pre>
+            <h3>Response</h3>
+            <pre><code>{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNzUyNzI3NDkxfQ.EXAMPLE_TOKEN"
+}</code></pre>
+            <p>
+                <strong>Note:</strong> Contact your administrator to obtain valid API credentials.
+                Credentials are securely stored in AWS Secrets Manager.
+            </p>
+        </div>
+
+        <h3>Using the JWT Token</h3>
+        <p>
+            Include the token in the Authorization header for all subsequent requests:
+        </p>
+        <pre><code>Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNzUyNzI3NDkxfQ.EXAMPLE_TOKEN</code></pre>
+    </section>
+
+    <section>
+        <h2>API Endpoints</h2>
+
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/health</code>
+            <p>Check API health status (no authentication required)</p>
+            <h3>Response</h3>
+            <pre><code>{
+  "status": "healthy"
+}</code></pre>
+        </div>
+
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/vehicles</code>
+            <p>Get all vehicles in the catalog</p>
+            <h3>Response</h3>
+            <pre><code>{
+  "vehicles": [
+    {
+      "id": 1,
+      "make": "Example Brand",
+      "model": "Sedan X",
+      "year": 2024,
+      "price": 35990.00,
+      "image_url": "https://example.com/images/sedan-x-2024.jpg",
+      "created_at": "2023-10-15T14:30:45"
+    },
+    {
+      "id": 2,
+      "make": "Example Brand",
+      "model": "SUV Pro",
+      "year": 2024,
+      "price": 42995.00,
+      "image_url": "https://example.com/images/suv-pro-2024.jpg",
+      "created_at": "2023-10-15T14:30:45"
+    }
+  ],
+  "count": 2
+}</code></pre>
+        </div>
+
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/vehicles/{id}</code>
+            <p>Get a specific vehicle by ID</p>
+            <h3>Response</h3>
+            <pre><code>{
+  "id": 1,
+  "make": "Example Brand",
+  "model": "Sedan X",
+  "year": 2024,
+  "price": 35990.00,
+  "image_url": "https://example.com/images/sedan-x-2024.jpg",
+  "created_at": "2023-10-15T14:30:45"
+}</code></pre>
+        </div>
+
+        <div class="endpoint">
+            <span class="method post">POST</span> <code>/vehicles</code>
+            <p>Create a new vehicle</p>
+            <h3>Request (Form Data with Image)</h3>
+            <pre><code>make: "Example Brand"
+model: "Luxury Coupe"
+year: "2024"
+price: "59990"
+image: [file upload]</code></pre>
+            <h3>Request (JSON without Image)</h3>
+            <pre><code>{
+  "make": "Example Brand",
+  "model": "Luxury Coupe",
+  "year": 2024,
+  "price": 59990.00,
+  "image_url": "https://example.com/images/luxury-coupe-2024.jpg"
+}</code></pre>
+            <h3>Response</h3>
+            <pre><code>{
+  "id": 6,
+  "make": "Example Brand",
+  "model": "Luxury Coupe",
+  "year": 2024,
+  "price": 59990.00,
+  "image_url": "https://example.com/images/luxury-coupe-2024.jpg",
+  "created_at": "2023-11-20T09:45:12"
+}</code></pre>
+        </div>
+
+        <div class="endpoint">
+            <span class="method put">PUT</span> <code>/vehicles/{id}</code>
+            <p>Update an existing vehicle</p>
+            <h3>Request</h3>
+            <pre><code>{
+  "price": 57990.00,
+  "model": "Luxury Coupe Premium"
+}</code></pre>
+            <h3>Response</h3>
+            <pre><code>{
+  "id": 6,
+  "make": "Example Brand",
+  "model": "Luxury Coupe Premium",
+  "year": 2024,
+  "price": 57990.00,
+  "image_url": "https://example.com/images/luxury-coupe-2024.jpg",
+  "created_at": "2023-11-20T09:45:12"
+}</code></pre>
+        </div>
+
+        <div class="endpoint">
+            <span class="method delete">DELETE</span> <code>/vehicles/{id}</code>
+            <p>Delete a vehicle</p>
+            <h3>Response</h3>
+            <pre><code>{
+  "message": "Vehicle deleted successfully"
+}</code></pre>
+        </div>
+    </section>
+
+    <section>
+        <h2>Error Handling</h2>
+        <p>The API returns appropriate HTTP status codes and error messages:</p>
+        <table>
+            <tr>
+                <th>Status Code</th>
+                <th>Description</th>
+                <th>Example</th>
+            </tr>
+            <tr>
+                <td>400</td>
+                <td>Bad Request</td>
+                <td><code>{"error": "Username and password required"}</code></td>
+            </tr>
+            <tr>
+                <td>401</td>
+                <td>Unauthorized</td>
+                <td><code>{"error": "Invalid credentials"}</code></td>
+            </tr>
+            <tr>
+                <td>403</td>
+                <td>Forbidden</td>
+                <td><code>{"error": "Token is invalid"}</code></td>
+            </tr>
+            <tr>
+                <td>404</td>
+                <td>Not Found</td>
+                <td><code>{"error": "Resource not found"}</code></td>
+            </tr>
+            <tr>
+                <td>500</td>
+                <td>Server Error</td>
+                <td><code>{"error": "Vehicle creation failed", "message": "Error details"}</code></td>
+            </tr>
+            <tr>
+                <td>503</td>
+                <td>Service Unavailable</td>
+                <td><code>{"error": "Database connection unavailable"}</code></td>
+            </tr>
+        </table>
+    </section>
+
+    <section>
+        <h2>Production Environment</h2>
+        <p>
+            The production API is hosted on AWS using ECS Fargate with an Application Load Balancer.
+            Replace <code>api-endpoint</code> with the actual API endpoint provided by your administrator.
+        </p>
+        <pre><code>curl -X POST https://api-endpoint/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "your_username", "password": "your_password"}'</code></pre>
+    </section>
+
+    <footer style="margin-top: 50px; border-top: 1px solid #eee; padding-top: 20px; text-align: center;">
+        <p>&copy; 2023 CWC Vehicle Catalog API. All rights reserved.</p>
+    </footer>
+</body>
+</html>

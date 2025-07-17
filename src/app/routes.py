@@ -1,10 +1,15 @@
 import os
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request, current_app, send_from_directory
 from app.models import db, Vehicle
 from app.auth import token_required, generate_token, authenticate_user
 from app.s3_utils import upload_image_to_s3
 
-bp = Blueprint('main', __name__)
+bp = Blueprint('main', __name__, static_folder='static')
+
+@bp.route('/')
+def index():
+    """Serve API documentation page"""
+    return send_from_directory(bp.static_folder, 'index.html')
 
 @bp.route('/health')
 def health():
