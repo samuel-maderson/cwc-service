@@ -132,14 +132,13 @@ module "monitoring" {
   count  = var.environment == "prod" ? 1 : 0
   source = "./modules/monitoring"
 
-  environment           = var.environment
-  aws_region            = var.aws_region
-  cluster_name          = var.cluster_name
-  service_name          = var.service_name
-  alb_arn_suffix        = module.alb[0].alb_arn_suffix
-  db_instance_id        = module.rds[0].db_instance_id
-  rds_cluster_identifier = var.rds_cluster_identifier
-  alert_email           = "samuel.maderson@gmail.com"
+  environment    = var.environment
+  aws_region     = var.aws_region
+  cluster_name   = var.cluster_name
+  service_name   = var.service_name
+  alb_arn_suffix = module.alb[0].alb_arn_suffix
+  db_instance_id = module.rds[0].db_instance_id
+  alert_email    = "samuel.maderson@gmail.com"
 }
 
 
