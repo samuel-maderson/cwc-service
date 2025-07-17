@@ -40,8 +40,8 @@ resource "aws_cloudwatch_dashboard" "cwc_dashboard" {
           view    = "timeSeries"
           stacked = false
           metrics = [
-            ["AWS/ECS", "RunningTaskCount", "ServiceName", var.service_name, "ClusterName", var.cluster_name],
-            [".", "PendingTaskCount", ".", ".", ".", "."]
+            ["ECS/ContainerInsights", "RunningTaskCount", "ClusterName", var.cluster_name],
+            [".", "PendingTaskCount", ".", "."]
           ]
           region = var.aws_region
           title  = "ECS Task Count"
@@ -200,7 +200,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_task_count_alarm" {
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 1
   metric_name         = "RunningTaskCount"
-  namespace           = "AWS/ECS"
+  namespace           = "ECS/ContainerInsights"
   period              = 60
   statistic           = "Average"
   threshold           = 3
@@ -209,7 +209,6 @@ resource "aws_cloudwatch_metric_alarm" "ecs_task_count_alarm" {
   ok_actions          = [aws_sns_topic.alerts.arn]
   dimensions = {
     ClusterName = var.cluster_name
-    ServiceName = var.service_name
   }
 }
 
