@@ -153,10 +153,24 @@ jobs:
         terraform init -upgrade
         TASK_ARN=$(aws ecs list-tasks --cluster cwc-cluster --service-name cwc-service --query 'taskArns[0]' --output text)
         if [ "$TASK_ARN" != "None" ] && [ -n "$TASK_ARN" ]; then
-          aws ecs execute-command \
+          # Check if migration has already been run by checking if vehicles table has data
+          VEHICLE_COUNT=$(aws ecs execute-command \
             --cluster cwc-cluster \
             --task "$TASK_ARN" \
             --container cwc-app \
             --interactive \
-            --command "bash -c 'cd /app && mysql -h \$RDS_ENDPOINT -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$SECRET_NAME --query SecretString --output text | jq -r .password) cwc_catalog < migrations/init_vehicles.sql'"
+            --command "bash -c 'cd /app && mysql -h \$RDS_ENDPOINT -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$SECRET_NAME --query SecretString --output text | jq -r .password) -e "SELECT COUNT(*) FROM vehicles" cwc_catalog'" 2>&1 | grep -oE '[0-9]+' | tail -1)
+          
+          # Only run migration if no vehicles exist
+          if [ -z "$VEHICLE_COUNT" ] || [ "$VEHICLE_COUNT" -eq "0" ]; then
+            echo "No vehicles found in database. Running migration..."
+            aws ecs execute-command \
+              --cluster cwc-cluster \
+              --task "$TASK_ARN" \
+              --container cwc-app \
+              --interactive \
+              --command "bash -c 'cd /app && mysql -h \$RDS_ENDPOINT -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$SECRET_NAME --query SecretString --output text | jq -r .password) cwc_catalog < migrations/init_vehicles.sql'"
+          else
+            echo "Migration already applied. Found $VEHICLE_COUNT vehicles in database."
+          fi
         fi
