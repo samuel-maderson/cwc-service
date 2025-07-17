@@ -110,6 +110,7 @@ jobs:
         IMAGE_TAG="${GITHUB_SHA:0:8}"
         ECR_URL=$(terraform output -raw ecr_repository_url)
         terraform apply -var="environment=${{ needs.setup.outputs.environment }}" -var="container_image=$ECR_URL:$IMAGE_TAG" -auto-approve
+        aws ecs update-service --cluster cwc-cluster --service cwc-service --force-new-deployment
         echo "Waiting for deployment to stabilize..."
         sleep 30
     - name: Upload images to S3
