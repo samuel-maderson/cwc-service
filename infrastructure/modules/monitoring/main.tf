@@ -22,11 +22,10 @@ resource "aws_cloudwatch_dashboard" "cwc_dashboard" {
           view    = "timeSeries"
           stacked = false
           metrics = [
-            ["AWS/ECS", "CPUUtilization", "ServiceName", var.service_name, "ClusterName", var.cluster_name],
-            [".", "MemoryUtilization", ".", ".", ".", "."]
+            ["AWS/ECS", "CPUUtilization", "ServiceName", var.service_name, "ClusterName", var.cluster_name]
           ]
           region = var.aws_region
-          title  = "ECS Service CPU & Memory Utilization"
+          title  = "ECS Service CPU Utilization"
           period = 300
         }
       },
@@ -40,12 +39,11 @@ resource "aws_cloudwatch_dashboard" "cwc_dashboard" {
           view    = "timeSeries"
           stacked = false
           metrics = [
-            ["ECS/ContainerInsights", "RunningTaskCount", "ClusterName", var.cluster_name],
-            [".", "PendingTaskCount", ".", "."]
+            ["AWS/ECS", "MemoryUtilization", "ServiceName", var.service_name, "ClusterName", var.cluster_name]
           ]
           region = var.aws_region
-          title  = "ECS Task Count"
-          period = 60
+          title  = "ECS Service Memory Utilization"
+          period = 300
         }
       },
       {
