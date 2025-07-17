@@ -151,26 +151,37 @@ jobs:
       run: |
         cd infrastructure
         terraform init -upgrade
+        # Wait for ECS tasks to be fully running
+        echo "Waiting for ECS tasks to be ready..."
+        sleep 120
+        
         TASK_ARN=$(aws ecs list-tasks --cluster cwc-cluster --service-name cwc-service --query 'taskArns[0]' --output text)
         if [ "$TASK_ARN" != "None" ] && [ -n "$TASK_ARN" ]; then
-          # Check if migration has already been run by checking if vehicles table has data
-          VEHICLE_COUNT=$(aws ecs execute-command \
+          echo "Running database migration..."
+          # First create the table if it doesn't exist
+          aws ecs execute-command \
             --cluster cwc-cluster \
             --task "$TASK_ARN" \
             --container cwc-app \
             --interactive \
-            --command "bash -c 'cd /app && mysql -h \$RDS_ENDPOINT -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$SECRET_NAME --query SecretString --output text | jq -r .password) cwc_catalog -e \"SELECT COUNT(*) FROM vehicles\"'" 2>&1 | grep -oE '[0-9]+' | tail -1)
+            --command "bash -c 'cd /app && mysql -h \$RDS_ENDPOINT -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$SECRET_NAME --query SecretString --output text | jq -r .password) cwc_catalog -e "CREATE TABLE IF NOT EXISTS vehicles (id INT AUTO_INCREMENT PRIMARY KEY, make VARCHAR(100), model VARCHAR(100), year INT, price DECIMAL(10,2), image_url VARCHAR(255), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"'"
           
-          # Only run migration if no vehicles exist
-          if [ -z "$VEHICLE_COUNT" ] || [ "$VEHICLE_COUNT" -eq "0" ]; then
-            echo "No vehicles found in database. Running migration..."
-            aws ecs execute-command \
-              --cluster cwc-cluster \
-              --task "$TASK_ARN" \
-              --container cwc-app \
-              --interactive \
-              --command "bash -c 'cd /app && mysql -h \$RDS_ENDPOINT -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$SECRET_NAME --query SecretString --output text | jq -r .password) cwc_catalog < migrations/init_vehicles.sql'"
-          else
-            echo "Migration already applied. Found $VEHICLE_COUNT vehicles in database."
-          fi
+          # Then run the migration to populate data
+          echo "Populating vehicle data..."
+          aws ecs execute-command \
+            --cluster cwc-cluster \
+            --task "$TASK_ARN" \
+            --container cwc-app \
+            --interactive \
+            --command "bash -c 'cd /app && mysql -h \$RDS_ENDPOINT -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$SECRET_NAME --query SecretString --output text | jq -r .password) cwc_catalog < migrations/init_vehicles.sql'"
+          
+          echo "Migration completed. Verifying data..."
+          aws ecs execute-command \
+            --cluster cwc-cluster \
+            --task "$TASK_ARN" \
+            --container cwc-app \
+            --interactive \
+            --command "bash -c 'cd /app && mysql -h \$RDS_ENDPOINT -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$SECRET_NAME --query SecretString --output text | jq -r .password) cwc_catalog -e "SELECT COUNT(*) FROM vehicles;"'"
+        else
+          echo "No ECS tasks found. Migration skipped."
         fi
