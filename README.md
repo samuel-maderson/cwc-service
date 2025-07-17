@@ -40,9 +40,17 @@ Our architecture is designed with enterprise-grade reliability and performance i
 
 ## API Endpoints
 
+### Authentication
 - `POST /login` - Authenticate and get JWT token
-- `GET /vehicles` - List all vehicles (requires JWT)
-- `GET /vehicles/<id>` - Get specific vehicle (requires JWT)
+
+### Vehicle Operations (all require JWT)
+- `GET /vehicles` - List all vehicles
+- `GET /vehicles/<id>` - Get specific vehicle
+- `POST /vehicles` - Create a new vehicle
+- `PUT /vehicles/<id>` - Update an existing vehicle
+- `DELETE /vehicles/<id>` - Delete a vehicle
+
+### System
 - `GET /health` - Health check (public)
 
 ## Local Development
