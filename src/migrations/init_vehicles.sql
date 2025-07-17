@@ -11,15 +11,15 @@ CREATE TABLE IF NOT EXISTS vehicles (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Sample Audi vehicles for development
+-- Sample vehicles for development
 INSERT INTO vehicles (make, model, year, price, image_url) VALUES
-('Audi', 'A3', 2024, 35990.00, 'https://cwc-vehicle-images-34d0e602.s3.amazonaws.com/audi-a3-2024.jpg'),
-('Audi', 'A5', 2024, 42995.00, 'https://cwc-vehicle-images-34d0e602.s3.amazonaws.com/audi-a5-2024.jpg'),
-('Audi', 'A6', 2024, 58995.00, 'https://cwc-vehicle-images-34d0e602.s3.amazonaws.com/audi-a6-2024.jpg'),
-('Audi', 'Q3', 2024, 39995.00, 'https://cwc-vehicle-images-34d0e602.s3.amazonaws.com/audi-q3-2024.jpg'),
-('Audi', 'Q5', 2024, 49995.00, 'https://cwc-vehicle-images-34d0e602.s3.amazonaws.com/audi-q5-2024.jpg');
+('Example Brand', 'Sedan A', 2024, 35990.00, 'https://cwc-vehicle-images-34d0e602.s3.amazonaws.com/sedan-a-2024.jpg'),
+('Example Brand', 'Sedan B', 2024, 42995.00, 'https://cwc-vehicle-images-34d0e602.s3.amazonaws.com/sedan-b-2024.jpg'),
+('Example Brand', 'Sedan C', 2024, 58995.00, 'https://cwc-vehicle-images-34d0e602.s3.amazonaws.com/sedan-c-2024.jpg'),
+('Example Brand', 'SUV X', 2024, 39995.00, 'https://cwc-vehicle-images-34d0e602.s3.amazonaws.com/suv-x-2024.jpg'),
+('Example Brand', 'SUV Y', 2024, 49995.00, 'https://cwc-vehicle-images-34d0e602.s3.amazonaws.com/suv-y-2024.jpg');
 
 -- Production data (different pricing/models)
 -- INSERT INTO vehicles (make, model, year, price, image_url) VALUES
--- ('Audi', 'e-tron GT', 2024, 102995.00, 'https://cwc-vehicle-images.s3.amazonaws.com/etron-gt-2024.jpg'),
--- ('Audi', 'RS6', 2024, 119995.00, 'https://cwc-vehicle-images.s3.amazonaws.com/rs6-2024.jpg');
+-- ('Premium Brand', 'Electric GT', 2024, 102995.00, 'https://cwc-vehicle-images.s3.amazonaws.com/electric-gt-2024.jpg'),
+-- ('Premium Brand', 'Sport Wagon', 2024, 119995.00, 'https://cwc-vehicle-images.s3.amazonaws.com/sport-wagon-2024.jpg');

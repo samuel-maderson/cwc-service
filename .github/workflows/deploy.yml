@@ -164,7 +164,7 @@ jobs:
             --task "$TASK_ARN" \
             --container cwc-app \
             --interactive \
-            --command "bash -c 'cd /app && mysql -h \$RDS_ENDPOINT -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$SECRET_NAME --query SecretString --output text | jq -r .password) cwc_catalog -e "CREATE TABLE IF NOT EXISTS vehicles (id INT AUTO_INCREMENT PRIMARY KEY, make VARCHAR(100), model VARCHAR(100), year INT, price DECIMAL(10,2), image_url VARCHAR(255), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"'"
+            --command "bash -c 'cd /app && mysql -h \$RDS_ENDPOINT -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$SECRET_NAME --query SecretString --output text | jq -r .password) cwc_catalog -e \"CREATE TABLE IF NOT EXISTS vehicles (id INT AUTO_INCREMENT PRIMARY KEY, make VARCHAR(50) NOT NULL, model VARCHAR(100) NOT NULL, year INT NOT NULL, price DECIMAL(10,2), image_url VARCHAR(500), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);\";'"
           
           # Then run the migration to populate data
           echo "Populating vehicle data..."
@@ -181,7 +181,7 @@ jobs:
             --task "$TASK_ARN" \
             --container cwc-app \
             --interactive \
-            --command "bash -c 'cd /app && mysql -h \$RDS_ENDPOINT -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$SECRET_NAME --query SecretString --output text | jq -r .password) cwc_catalog -e "SELECT COUNT(*) FROM vehicles;"'"
+            --command "bash -c 'cd /app && mysql -h \$RDS_ENDPOINT -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$SECRET_NAME --query SecretString --output text | jq -r .password) cwc_catalog -e \"SELECT COUNT(*) FROM vehicles;\";'"
         else
           echo "No ECS tasks found. Migration skipped."
         fi
