@@ -192,38 +192,3 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu_alarm" {
   }
 }
 
-# ECS Running Tasks Alarm
-resource "aws_cloudwatch_metric_alarm" "ecs_task_count_alarm" {
-  alarm_name          = "cwc-${var.environment}-ecs-task-count-alarm"
-  comparison_operator = "LessThanThreshold"
-  evaluation_periods  = 1
-  metric_name         = "RunningTaskCount"
-  namespace           = "ECS/ContainerInsights"
-  period              = 60
-  statistic           = "Average"
-  threshold           = 3
-  alarm_description   = "This alarm monitors if there are fewer than 3 running ECS tasks"
-  alarm_actions       = [aws_sns_topic.alerts.arn]
-  ok_actions          = [aws_sns_topic.alerts.arn]
-  dimensions = {
-    ClusterName = var.cluster_name
-  }
-}
-
-# ALB 5XX Error Alarm
-resource "aws_cloudwatch_metric_alarm" "alb_5xx_alarm" {
-  alarm_name          = "cwc-${var.environment}-alb-5xx-alarm"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 1
-  metric_name         = "HTTPCode_Target_5XX_Count"
-  namespace           = "AWS/ApplicationELB"
-  period              = 60
-  statistic           = "Sum"
-  threshold           = 5
-  alarm_description   = "This alarm monitors for 5XX errors from the ALB"
-  alarm_actions       = [aws_sns_topic.alerts.arn]
-  ok_actions          = [aws_sns_topic.alerts.arn]
-  dimensions = {
-    LoadBalancer = var.alb_arn_suffix
-  }
-}

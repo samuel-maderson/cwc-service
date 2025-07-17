@@ -202,8 +202,6 @@ The application includes comprehensive monitoring and alerting through CloudWatc
 - **ECS CPU Alarm** - Triggers when CPU utilization exceeds 50% for 10 minutes
 - **ECS Memory Alarm** - Triggers when memory utilization exceeds 50% for 10 minutes
 - **RDS CPU Alarm** - Triggers when database CPU exceeds 50% for 10 minutes
-- **ECS Task Count Alarm** - Triggers when fewer than 3 tasks are running
-- **ALB 5XX Error Alarm** - Triggers when 5 or more 5XX errors occur in a minute
 
 All alarms send notifications to a designated email address via SNS.
 
