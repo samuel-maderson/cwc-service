@@ -8,8 +8,8 @@ output "db_address" {
   value       = aws_db_instance.main.address
 }
 
-output "db_id" {
-  description = "RDS instance ID"
+output "db_instance_id" {
+  description = "RDS instance identifier"
   value       = aws_db_instance.main.id
 }
 

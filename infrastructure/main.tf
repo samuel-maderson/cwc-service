@@ -128,5 +128,17 @@ module "rds" {
   db_subnet_group_name    = var.db_subnet_group_name
 }
 
+module "monitoring" {
+  count  = var.environment == "prod" ? 1 : 0
+  source = "./modules/monitoring"
+
+  environment    = var.environment
+  aws_region     = var.aws_region
+  cluster_name   = var.cluster_name
+  service_name   = var.service_name
+  alb_arn_suffix = module.alb[0].alb_arn_suffix
+  db_instance_id = module.rds[0].db_instance_id
+  alert_email    = "samuel.maderson@gmail.com"
+}
 
 

@@ -17,3 +17,8 @@ output "alb_security_group_id" {
   description = "Security group ID of the ALB"
   value       = aws_security_group.alb.id
 }
+
+output "alb_arn_suffix" {
+  description = "ARN suffix of the Application Load Balancer (for CloudWatch metrics)"
+  value       = aws_lb.main.arn_suffix
+}

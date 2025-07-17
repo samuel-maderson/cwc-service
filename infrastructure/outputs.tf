@@ -47,3 +47,13 @@ output "api_auth_secret_name" {
   description = "API authentication secret name"
   value       = module.api_auth.secret_name
 }
+
+output "monitoring_dashboard_url" {
+  description = "URL to the CloudWatch monitoring dashboard"
+  value       = var.environment == "prod" ? module.monitoring[0].dashboard_url : null
+}
+
+output "monitoring_sns_topic_arn" {
+  description = "ARN of the SNS topic for monitoring alerts"
+  value       = var.environment == "prod" ? module.monitoring[0].sns_topic_arn : null
+}
