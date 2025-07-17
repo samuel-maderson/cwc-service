@@ -159,7 +159,7 @@ jobs:
             --task "$TASK_ARN" \
             --container cwc-app \
             --interactive \
-            --command "bash -c 'cd /app && mysql -h \$RDS_ENDPOINT -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$SECRET_NAME --query SecretString --output text | jq -r .password) -e "SELECT COUNT(*) FROM vehicles" cwc_catalog'" 2>&1 | grep -oE '[0-9]+' | tail -1)
+            --command "bash -c 'cd /app && mysql -h \$RDS_ENDPOINT -u admin -p\$(aws secretsmanager get-secret-value --secret-id \$SECRET_NAME --query SecretString --output text | jq -r .password) cwc_catalog -e \"SELECT COUNT(*) FROM vehicles\"'" 2>&1 | grep -oE '[0-9]+' | tail -1)
           
           # Only run migration if no vehicles exist
           if [ -z "$VEHICLE_COUNT" ] || [ "$VEHICLE_COUNT" -eq "0" ]; then
