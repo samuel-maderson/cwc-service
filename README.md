@@ -53,6 +53,8 @@ Our architecture is designed with enterprise-grade reliability and performance i
 ### System
 - `GET /health` - Health check (public)
 
+For detailed API documentation including request/response formats, examples, and error handling, see the `/` endpoint which serves the `index.html` documentation.
+
 ## Local Development
 
 ### Prerequisites
@@ -97,7 +99,31 @@ curl http://localhost/vehicles \
 curl http://localhost/vehicles/1 \
   -H "Authorization: Bearer <your_jwt_token>"
 
-# 4. Health check (no auth required)
+# 4. Create a new vehicle
+curl -X POST http://localhost/vehicles \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your_jwt_token>" \
+  -d '{
+    "make": "Example Brand",
+    "model": "New Model",
+    "year": 2024,
+    "price": 45995.00,
+    "image_url": "https://example.com/image.jpg"
+  }'
+
+# 5. Update a vehicle
+curl -X PUT http://localhost/vehicles/1 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your_jwt_token>" \
+  -d '{
+    "price": 46995.00
+  }'
+
+# 6. Delete a vehicle
+curl -X DELETE http://localhost/vehicles/1 \
+  -H "Authorization: Bearer <your_jwt_token>"
+
+# 7. Health check (no auth required)
 curl http://localhost/health
 ```
 
