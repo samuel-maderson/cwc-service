@@ -11,7 +11,7 @@ Our architecture is designed with enterprise-grade reliability and performance i
 - **Fault-Tolerant Multi-AZ Deployment** - Services distributed across three Availability Zones ensuring continuous operation even if an entire zone fails
 - **Dynamic Auto-scaling** - ECS Fargate containers automatically adjust capacity based on traffic patterns and demand
 - **Managed Relational Database** - RDS MySQL with Multi-AZ replication for data durability and high availability
-- **Resilient Object Storage** - S3 for vehicle images with 99.999999999% durability and cross-region replication capability
+- **Resilient Object Storage** - S3 for vehicle images with durability and cross-region replication capability
 - **Enterprise Monitoring Solution** - CloudWatch dashboards with real-time metrics, custom alarms, and automated notifications
 
 ### Development
