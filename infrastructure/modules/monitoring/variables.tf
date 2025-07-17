@@ -28,6 +28,11 @@ variable "db_instance_id" {
   type        = string
 }
 
+variable "rds_cluster_identifier" {
+  description = "RDS cluster identifier"
+  type        = string
+}
+
 variable "alert_email" {
   description = "Email address to send alerts to"
   type        = string

@@ -95,7 +95,7 @@ resource "aws_cloudwatch_dashboard" "cwc_dashboard" {
           view    = "timeSeries"
           stacked = false
           metrics = [
-            ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", var.db_instance_id],
+            ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", var.rds_cluster_identifier],
             [".", "DatabaseConnections", ".", "."]
           ]
           region = var.aws_region
@@ -113,7 +113,7 @@ resource "aws_cloudwatch_dashboard" "cwc_dashboard" {
           view    = "timeSeries"
           stacked = false
           metrics = [
-            ["AWS/RDS", "FreeStorageSpace", "DBInstanceIdentifier", var.db_instance_id],
+            ["AWS/RDS", "FreeStorageSpace", "DBInstanceIdentifier", var.rds_cluster_identifier],
             [".", "ReadIOPS", ".", "."],
             [".", "WriteIOPS", ".", "."]
           ]
@@ -190,7 +190,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu_alarm" {
   alarm_actions       = [aws_sns_topic.alerts.arn]
   ok_actions          = [aws_sns_topic.alerts.arn]
   dimensions = {
-    DBInstanceIdentifier = var.db_instance_id
+    DBInstanceIdentifier = var.rds_cluster_identifier
   }
 }
 
