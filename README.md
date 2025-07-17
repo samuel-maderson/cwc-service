@@ -165,6 +165,29 @@ The `.env` file is only necessary for local development. In production, all conf
 - **VPC Isolation** - Production resources in private subnets
 - **IAM Roles** - Least privilege access for ECS tasks
 
+### Monitoring and Alerts
+
+![CloudWatch Dashboard](docs/images/cw-dashboard-1.png)
+
+The application includes comprehensive monitoring and alerting through CloudWatch:
+
+#### CloudWatch Dashboard
+- **ECS Service CPU Utilization** - Real-time CPU usage of ECS tasks
+- **ECS Service Memory Utilization** - Memory consumption of ECS tasks
+- **ALB Response Codes** - HTTP response codes (2XX, 4XX, 5XX) from the load balancer
+- **ALB Response Time** - Average response time for API requests
+- **RDS CPU & Connections** - Database CPU usage and active connections
+- **RDS Storage & IOPS** - Database storage space and I/O operations
+
+#### CloudWatch Alarms
+- **ECS CPU Alarm** - Triggers when CPU utilization exceeds 50% for 10 minutes
+- **ECS Memory Alarm** - Triggers when memory utilization exceeds 50% for 10 minutes
+- **RDS CPU Alarm** - Triggers when database CPU exceeds 50% for 10 minutes
+- **ECS Task Count Alarm** - Triggers when fewer than 3 tasks are running
+- **ALB 5XX Error Alarm** - Triggers when 5 or more 5XX errors occur in a minute
+
+All alarms send notifications to a designated email address via SNS.
+
 ## Architecture
 
 ![CWC API Architecture](docs/images/cwc-api-architecture.png)
