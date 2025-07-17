@@ -6,6 +6,14 @@ A secure REST API for querying vehicle catalog data with JWT authentication and 
 
 ![CWC API Architecture](docs/images/cwc-api-architecture.png)
 
+Our architecture is designed with enterprise-grade reliability and performance in mind:
+
+- **Fault-Tolerant Multi-AZ Deployment** - Services distributed across three Availability Zones ensuring continuous operation even if an entire zone fails
+- **Dynamic Auto-scaling** - ECS Fargate containers automatically adjust capacity based on traffic patterns and demand
+- **Managed Relational Database** - RDS MySQL with Multi-AZ replication for data durability and high availability
+- **Resilient Object Storage** - S3 for vehicle images with 99.999999999% durability and cross-region replication capability
+- **Enterprise Monitoring Solution** - CloudWatch dashboards with real-time metrics, custom alarms, and automated notifications
+
 ### Development
 - **VPC** with public subnets
 - **RDS MySQL** (publicly accessible for direct connection)
@@ -13,11 +21,11 @@ A secure REST API for querying vehicle catalog data with JWT authentication and 
 - **Direct database** access for development
 
 ### Production
-- **VPC** with public/private subnets
-- **Application Load Balancer** (public)
-- **ECS Fargate** (private subnets)
-- **RDS MySQL** (private subnets)
-- **Bastion Host** for database access
+- **VPC** with public/private subnets across 3 Availability Zones
+- **Application Load Balancer** (public) for traffic distribution
+- **ECS Fargate** (private subnets) with tasks distributed across AZs
+- **RDS MySQL** (private subnets) with multi-AZ option
+- **Bastion Host** for secure database access
 - **ECR** for container images
 - **S3** for vehicle images
 
@@ -89,7 +97,13 @@ curl http://localhost/health
 
 ### GitHub Actions
 
-Production deployment is automated via GitHub Actions on push to `main` branch.
+Production deployment is automated via GitHub Actions workflow defined in `.github/workflows/deploy.yml`. The workflow is triggered automatically on every push to the `main` branch, ensuring continuous deployment of the latest changes.
+
+The deployment process includes:
+1. Infrastructure provisioning with Terraform
+2. Docker image building and pushing to ECR
+3. ECS service update with the new container image
+4. Database migration (only runs if needed)
 
 **Required Secrets:**
 - `AWS_ACCESS_KEY_ID`
@@ -98,6 +112,8 @@ Production deployment is automated via GitHub Actions on push to `main` branch.
 
 **Required Variables:**
 - `DEPLOY_ENVIRONMENT` (set to "prod")
+
+The workflow can also be manually triggered using GitHub's workflow_dispatch feature, allowing you to select specific jobs to run (infrastructure, docker, or migration).
 
 ### Manual Production Deploy
 
