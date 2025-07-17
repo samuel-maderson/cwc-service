@@ -2,6 +2,25 @@
 
 A secure REST API for querying vehicle catalog data with JWT authentication and comprehensive vehicle information.
 
+## Architecture
+
+![CWC API Architecture](docs/images/cwc-api-architecture.png)
+
+### Development
+- **VPC** with public subnets
+- **RDS MySQL** (publicly accessible for direct connection)
+- **Local Docker** container
+- **Direct database** access for development
+
+### Production
+- **VPC** with public/private subnets
+- **Application Load Balancer** (public)
+- **ECS Fargate** (private subnets)
+- **RDS MySQL** (private subnets)
+- **Bastion Host** for database access
+- **ECR** for container images
+- **S3** for vehicle images
+
 ## Features
 
 - **JWT Authentication** - Secure API access with token-based authentication
@@ -187,25 +206,6 @@ The application includes comprehensive monitoring and alerting through CloudWatc
 - **ALB 5XX Error Alarm** - Triggers when 5 or more 5XX errors occur in a minute
 
 All alarms send notifications to a designated email address via SNS.
-
-## Architecture
-
-![CWC API Architecture](docs/images/cwc-api-architecture.png)
-
-### Development
-- **VPC** with public subnets
-- **RDS MySQL** (publicly accessible for direct connection)
-- **Local Docker** container
-- **Direct database** access for development
-
-### Production
-- **VPC** with public/private subnets
-- **Application Load Balancer** (public)
-- **ECS Fargate** (private subnets)
-- **RDS MySQL** (private subnets)
-- **Bastion Host** for database access
-- **ECR** for container images
-- **S3** for vehicle images
 
 ## Troubleshooting
 
